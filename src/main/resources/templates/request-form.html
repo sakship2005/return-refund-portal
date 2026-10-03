@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>New Return Request</title></head>
+<body>
+  <h1>New Return Request</h1>
+  <form th:action="@{/requests}" th:object="${request}" method="post">
+    <label>Order ID: <input type="text" th:field="*{orderId}" required></label><br>
+    <label>Product: <input type="text" th:field="*{product}" required></label><br>
+    <label>Reason: <input type="text" th:field="*{reason}" required></label><br>
+    <label>Amount: <input type="number" step="0.01" th:field="*{amount}" required></label><br>
+    <label>Customer Name: <input type="text" th:field="*{customerName}" required></label><br>
+    <button type="submit">Submit</button>
+  </form>
+  <a href="/requests">Back to list</a>
+</body>
+</html>
