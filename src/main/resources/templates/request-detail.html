@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Request Detail</title></head>
+<body>
+  <h1>Request Detail</h1>
+  <p><b>Order ID:</b> <span th:text="${request.orderId}"></span></p>
+  <p><b>Product:</b> <span th:text="${request.product}"></span></p>
+  <p><b>Reason:</b> <span th:text="${request.reason}"></span></p>
+  <p><b>Amount:</b> <span th:text="${request.amount}"></span></p>
+  <p><b>Customer:</b> <span th:text="${request.customerName}"></span></p>
+  <p><b>Status:</b> <span th:text="${request.status}"></span></p>
+  <a href="/requests">Back to list</a>
+</body>
+</html>
