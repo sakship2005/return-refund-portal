@@ -1,6 +1,6 @@
 # Automated Return and Refund Management Portal
 
-A web application where customers raise product return requests, support agents and finance managers move each request through a controlled approval workflow, and managers see a live summary dashboard.
+A web application where customers raise return requests and support agents review them through a controlled workflow.
 
 ## Tech Stack
 - Java 17, Spring Boot 3.2.5 (upgraded and verified working)
