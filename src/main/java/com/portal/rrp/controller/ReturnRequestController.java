@@ -36,6 +36,36 @@ public class ReturnRequestController {
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
         model.addAttribute("request", service.findById(id).orElseThrow());
+        model.addAttribute("history", service.historyFor(id));
         return "request-detail";
+    }
+
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        model.addAttribute("request", service.findById(id).orElseThrow());
+        return "request-form";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable Long id, @ModelAttribute ReturnRequest formData) {
+        ReturnRequest existing = service.findById(id).orElseThrow();
+        existing.setProduct(formData.getProduct());
+        existing.setReason(formData.getReason());
+        existing.setAmount(formData.getAmount());
+        existing.setCustomerName(formData.getCustomerName());
+        service.save(existing);
+        return "redirect:/requests/" + id;
+    }
+
+    @PostMapping("/{id}/advance")
+    public String advance(@PathVariable Long id, @RequestParam String actor) {
+        service.advanceStatus(id, actor);
+        return "redirect:/requests/" + id;
+    }
+
+    @PostMapping("/{id}/reject")
+    public String reject(@PathVariable Long id, @RequestParam String actor) {
+        service.rejectRequest(id, actor);
+        return "redirect:/requests/" + id;
     }
 }

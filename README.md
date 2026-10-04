@@ -4,7 +4,7 @@
 A web application where customers raise product return requests, support agents and finance managers move each request through a controlled approval workflow, and managers see a live summary dashboard.
 
 ## Tech Stack
-- Java 17, Spring Boot 3.2.5
+- Java 17, Spring Boot 3.2.5 (upgraded and verified working)
 - Spring MVC + Thymeleaf
 - Spring Data JPA, H2 (dev)
 - Maven
@@ -26,3 +26,6 @@ See docs/mvp-scope.md for the full 15-task scope.
 - develop     : integration branch
 - feature/<name> : one branch per feature, merged into develop via PR
 "@ | Out-File -Encoding utf8 README.md
+
+git checkout develop
+git pull origin develop
