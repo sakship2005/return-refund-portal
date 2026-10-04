@@ -3,7 +3,7 @@
 <head><meta charset="UTF-8"><title>New Return Request</title></head>
 <body>
   <h1>New Return Request</h1>
-  <form th:action="@{/requests}" th:object="${request}" method="post">
+  <form th:action="${request.id == null ? '/requests' : '/requests/' + request.id + '/edit'}" th:object="${request}" method="post">
     <label>Order ID: <input type="text" th:field="*{orderId}" required></label><br>
     <label>Product: <input type="text" th:field="*{product}" required></label><br>
     <label>Reason: <input type="text" th:field="*{reason}" required></label><br>

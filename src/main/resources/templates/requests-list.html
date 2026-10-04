@@ -3,19 +3,21 @@
 <head><meta charset="UTF-8"><title>Return Requests</title></head>
 <body>
   <h1>Return Requests</h1>
-  <a href="/requests/new">+ New Request</a>
+  <a href="/requests/new">+ New Request</a> |
+  <a href="/dashboard">Dashboard</a>
   <form th:action="@{/requests}" method="get">
     <input type="text" name="q" th:value="${q}" placeholder="Search order ID or customer">
     <button type="submit">Search</button>
   </form>
   <table border="1" cellpadding="6">
-    <tr><th>Order ID</th><th>Product</th><th>Customer</th><th>Status</th><th>Amount</th></tr>
+    <tr><th>Order ID</th><th>Product</th><th>Customer</th><th>Status</th><th>Amount</th><th>Actions</th></tr>
     <tr th:each="r : ${requests}">
       <td><a th:href="@{/requests/{id}(id=${r.id})}" th:text="${r.orderId}"></a></td>
       <td th:text="${r.product}"></td>
       <td th:text="${r.customerName}"></td>
       <td th:text="${r.status}"></td>
       <td th:text="${r.amount}"></td>
+      <td><a th:href="@{/requests/{id}/edit(id=${r.id})}">Edit</a></td>
     </tr>
   </table>
 </body>

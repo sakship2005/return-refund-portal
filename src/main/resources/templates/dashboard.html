@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Return Request Dashboard</title></head>
+<body>
+  <h1>Return Request Dashboard</h1>
+  <p>Total refund value processed: <strong th:text="${totalRefund}"></strong></p>
+  <table border="1" cellpadding="6">
+    <tr><th>Status</th><th>Requests</th></tr>
+    <tr th:each="entry : ${counts}">
+      <td th:text="${entry.key}"></td>
+      <td th:text="${entry.value}"></td>
+    </tr>
+  </table>
+  <a href="/requests">View requests</a>
+</body>
+</html>

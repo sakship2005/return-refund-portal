@@ -1,4 +1,3 @@
-@"
 # Automated Return and Refund Management Portal
 
 A web application where customers raise product return requests, support agents and finance managers move each request through a controlled approval workflow, and managers see a live summary dashboard.
@@ -25,7 +24,3 @@ See docs/mvp-scope.md for the full 15-task scope.
 - main        : stable, release-ready
 - develop     : integration branch
 - feature/<name> : one branch per feature, merged into develop via PR
-"@ | Out-File -Encoding utf8 README.md
-
-git checkout develop
-git pull origin develop
