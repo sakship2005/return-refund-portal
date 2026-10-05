@@ -1,26 +1,32 @@
 pipeline {
     agent any
 
-    environment {
-        JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.20.101-hotspot'
-        PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
-    }
-
     options {
         skipDefaultCheckout(true)
         timestamps()
+    }
+
+    // Remove this block if your Jenkins tool names differ from jdk17 / maven3
+    tools {
+        jdk 'jdk17'
+        maven 'maven3'
     }
 
     parameters {
         choice(
             name: 'DEPLOY_ENV',
             choices: ['build-only', 'tomcat-local'],
-            description: 'Build only, or deploy the WAR to the local Tomcat service.'
+            description: 'build-only: build and archive the WAR. tomcat-local: also deploy to the local Tomcat service.'
         )
         string(
             name: 'TOMCAT_HOME',
             defaultValue: 'C:\\Program Files\\Apache Software Foundation\\Tomcat 11.0',
-            description: 'Tomcat installation directory used when DEPLOY_ENV is tomcat-local.'
+            description: 'Tomcat installation directory (used when DEPLOY_ENV is tomcat-local).'
+        )
+        string(
+            name: 'TOMCAT_PORT',
+            defaultValue: '8081',
+            description: 'HTTP port Tomcat listens on (used by the health check).'
         )
     }
 
@@ -31,16 +37,21 @@ pipeline {
             }
         }
 
-        stage('Build and Test') {
+        stage('Build') {
             steps {
-                bat 'mvn clean verify'
+                bat 'mvn -B clean test'
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                }
             }
         }
 
-        stage('Archive WAR') {
+        stage('Package') {
             steps {
+                bat 'mvn -B package -DskipTests'
                 archiveArtifacts artifacts: 'target/rrp.war', fingerprint: true
-                junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
             }
         }
 
@@ -49,8 +60,23 @@ pipeline {
                 expression { params.DEPLOY_ENV == 'tomcat-local' }
             }
             steps {
-                bat '''
-                    powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; $tomcatHome = '${TOMCAT_HOME}'; Stop-Service -Name 'Tomcat11' -Force -ErrorAction SilentlyContinue; Remove-Item -Path (Join-Path $tomcatHome 'webapps\\rrp.war') -Force -ErrorAction SilentlyContinue; Remove-Item -Path (Join-Path $tomcatHome 'webapps\\rrp') -Recurse -Force -ErrorAction SilentlyContinue; Copy-Item -Path 'target\\rrp.war' -Destination (Join-Path $tomcatHome 'webapps\\rrp.war'); Start-Service -Name 'Tomcat11'"
+                powershell '''
+                    $ErrorActionPreference = 'Stop'
+                    $service = 'Tomcat11'
+                    $webapps = Join-Path $env:TOMCAT_HOME 'webapps'
+
+                    Write-Host "Deploying to $webapps"
+
+                    Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
+                    (Get-Service -Name $service).WaitForStatus('Stopped', '00:00:30')
+
+                    Remove-Item -Path (Join-Path $webapps 'rrp.war') -Force -ErrorAction SilentlyContinue
+                    Remove-Item -Path (Join-Path $webapps 'rrp') -Recurse -Force -ErrorAction SilentlyContinue
+
+                    Copy-Item -Path 'target\\rrp.war' -Destination (Join-Path $webapps 'rrp.war') -Force
+
+                    Start-Service -Name $service
+                    Write-Host 'Tomcat service started.'
                 '''
             }
         }
@@ -60,8 +86,21 @@ pipeline {
                 expression { params.DEPLOY_ENV == 'tomcat-local' }
             }
             steps {
-                bat '''
-                    powershell -NoProfile -Command "$response = Invoke-WebRequest -Uri 'http://localhost:8080/rrp/health' -UseBasicParsing; if ($response.StatusCode -ne 200) { exit 1 }"
+                powershell '''
+                    $url = "http://localhost:$($env:TOMCAT_PORT)/rrp/health"
+                    for ($i = 1; $i -le 12; $i++) {
+                        try {
+                            $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 5
+                            if ($r.StatusCode -eq 200) {
+                                Write-Host "Healthy: $url returned 200"
+                                exit 0
+                            }
+                        } catch {
+                            Write-Host "Attempt $i of 12: not ready yet"
+                        }
+                        Start-Sleep -Seconds 5
+                    }
+                    throw "Health check failed: $url"
                 '''
             }
         }
@@ -69,10 +108,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline completed for ${params.DEPLOY_ENV}."
+            echo "Pipeline succeeded (DEPLOY_ENV=${params.DEPLOY_ENV})."
         }
         failure {
-            echo 'Pipeline failed; deployment and release evidence must not be treated as successful.'
+            echo 'Pipeline failed; do not treat this deployment as successful.'
         }
     }
 }
