@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        JAVA_HOME = 'C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.20.101-hotspot'
+        PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
+    }
+
     options {
         skipDefaultCheckout(true)
         timestamps()
