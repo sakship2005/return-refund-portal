@@ -8,8 +8,8 @@ pipeline {
 
     // Remove this block if your Jenkins tool names differ from jdk17 / maven3
     tools {
-        jdk 'jdk17'
-        maven 'maven3'
+        jdk 'JDK-21'
+        maven 'Maven-3.9.16'
     }
 
     parameters {
