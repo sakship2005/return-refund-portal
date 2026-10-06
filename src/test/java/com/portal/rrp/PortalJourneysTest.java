@@ -18,7 +18,7 @@ class PortalJourneysTest extends BaseSeleniumTest {
 
         String row = driver.findElement(
                 By.xpath("//tr[td/a[text()='" + orderId + "']]")).getText();
-        assertTrue(row.contains("NON_EXISTENT_PRODUCT_FAIL"), "product missing in row: " + row);
+        assertTrue(row.contains("Wireless Mouse"), "product missing in row: " + row);
         assertTrue(row.contains("Asha Rao"), "customer missing in row: " + row);
         assertTrue(row.contains("799.5"), "amount missing in row: " + row);
         assertTrue(row.contains("REQUESTED"), "new request should be REQUESTED: " + row);
