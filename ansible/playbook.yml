@@ -1,0 +1,67 @@
+@"
+---
+- name: Configure Server Prerequisites for Return and Refund Management Portal
+  hosts: portal_servers
+  become: yes
+  vars:
+    service_user: portalapp
+    deploy_dir: /opt/rrp
+    allowed_ports:
+      - 22
+      - 8081
+      - 8082
+
+  tasks:
+    - name: Ensure prerequisite packages are installed
+      apt:
+        name:
+          - curl
+          - git
+          - ufw
+          - openjdk-21-jre-headless
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Create dedicated portal application group
+      group:
+        name: "{{ service_user }}"
+        state: present
+
+    - name: Create dedicated portal service user
+      user:
+        name: "{{ service_user }}"
+        group: "{{ service_user }}"
+        groups: docker
+        append: yes
+        shell: /bin/false
+        system: yes
+        state: present
+
+    - name: Ensure application deployment directories exist with proper ownership
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user }}"
+        mode: '0755'
+      loop:
+        - "{{ deploy_dir }}"
+        - "{{ deploy_dir }}/logs"
+        - "{{ deploy_dir }}/config"
+
+    - name: Ensure Docker service is enabled and running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      ignore_errors: yes
+
+    - name: Configure UFW firewall rules for portal ports
+      ufw:
+        rule: allow
+        port: "{{ item | string }}"
+        proto: tcp
+      loop: "{{ allowed_ports }}"
+      when: ansible_os_family == "Debian"
+"@ | Set-Content -Path ansible/playbook.yml -Encoding UTF8

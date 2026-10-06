@@ -1,7 +1,6 @@
-@"
 # Automated Return and Refund Management Portal
 
-A web application where customers raise product return requests, support agents and finance managers move each request through a controlled approval workflow, and managers see a live summary dashboard.
+A web application where customers raise return requests, support agents and finance managers move them through a controlled workflow, and managers monitor the summary dashboard.
 
 ## Tech Stack
 - Java 17, Spring Boot 3.2.5 (upgraded and verified working)
@@ -25,7 +24,18 @@ See docs/mvp-scope.md for the full 15-task scope.
 - main        : stable, release-ready
 - develop     : integration branch
 - feature/<name> : one branch per feature, merged into develop via PR
-"@ | Out-File -Encoding utf8 README.md
 
-git checkout develop
-git pull origin develop
+# Base image with Java 21 runtime
+FROM eclipse-temurin:21-jre-alpine
+
+# Set working directory inside container
+WORKDIR /app
+
+# Copy the packaged Spring Boot WAR file into container
+COPY target/rrp.war app.war
+
+# Expose internal application port
+EXPOSE 8080
+
+# Run the executable WAR file
+ENTRYPOINT ["java", "-jar", "app.war"]
