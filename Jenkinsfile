@@ -6,7 +6,6 @@ pipeline {
         timestamps()
     }
 
-    // Remove this block if your Jenkins tool names differ from jdk17 / maven3
     tools {
         jdk 'JDK-21'
         maven 'Maven-3.9.16'
@@ -15,18 +14,23 @@ pipeline {
     parameters {
         choice(
             name: 'DEPLOY_ENV',
-            choices: ['build-only', 'tomcat-local'],
-            description: 'build-only: build and archive the WAR. tomcat-local: also deploy to the local Tomcat service.'
+            choices: ['docker-local', 'build-only', 'tomcat-local'],
+            description: 'docker-local: build versioned Docker image and deploy container. tomcat-local: deploy to Tomcat. build-only: build WAR only.'
+        )
+        string(
+            name: 'DOCKER_CONTAINER_PORT',
+            defaultValue: '8082',
+            description: 'Host port to expose the Docker container on.'
         )
         string(
             name: 'TOMCAT_HOME',
             defaultValue: 'C:\\Program Files\\Apache Software Foundation\\Tomcat 11.0',
-            description: 'Tomcat installation directory (used when DEPLOY_ENV is tomcat-local).'
+            description: 'Tomcat directory (used when DEPLOY_ENV is tomcat-local).'
         )
         string(
             name: 'TOMCAT_PORT',
             defaultValue: '8081',
-            description: 'HTTP port Tomcat listens on (used by the health check).'
+            description: 'Tomcat port (used when DEPLOY_ENV is tomcat-local).'
         )
     }
 
@@ -37,15 +41,13 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build & Test') {
             steps {
                 bat 'mvn -B clean test'
             }
             post {
                 always {
-                    // publish the test report; fail if no report exists (means tests never ran)
                     junit allowEmptyResults: false, testResults: 'target/surefire-reports/*.xml'
-                    // keep Selenium failure screenshots with the build
                     archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
                 }
             }
@@ -55,6 +57,61 @@ pipeline {
             steps {
                 bat 'mvn -B package -DskipTests'
                 archiveArtifacts artifacts: 'target/rrp.war', fingerprint: true
+            }
+        }
+
+        stage('Docker Build & Tag') {
+            when {
+                expression { params.DEPLOY_ENV == 'docker-local' }
+            }
+            steps {
+                powershell """
+                    Write-Host "Building versioned image: return-refund-portal:${BUILD_NUMBER}"
+                    docker build -t return-refund-portal:${BUILD_NUMBER} .
+                    docker tag return-refund-portal:${BUILD_NUMBER} return-refund-portal:latest
+                    Write-Host "Docker images built and tagged successfully."
+                """
+            }
+        }
+
+        stage('Deploy Docker Container') {
+            when {
+                expression { params.DEPLOY_ENV == 'docker-local' }
+            }
+            steps {
+                powershell """
+                    Write-Host "Stopping and removing existing rrp-container if present..."
+                    docker stop rrp-container 2>\$null
+                    docker rm rrp-container 2>\$null
+
+                    Write-Host "Deploying new container rrp-container from image return-refund-portal:${BUILD_NUMBER} on port ${params.DOCKER_CONTAINER_PORT}:8081..."
+                    docker run -d -p ${params.DOCKER_CONTAINER_PORT}:8081 --name rrp-container return-refund-portal:${BUILD_NUMBER}
+                """
+            }
+        }
+
+        stage('Docker Health Check') {
+            when {
+                expression { params.DEPLOY_ENV == 'docker-local' }
+            }
+            steps {
+                powershell """
+                    \$url = "http://localhost:${params.DOCKER_CONTAINER_PORT}/requests"
+                    Write-Host "Waiting for container to be healthy at \$url..."
+                    for (\$i = 1; \$i -le 15; \$i++) {
+                        try {
+                            \$r = Invoke-WebRequest -Uri \$url -UseBasicParsing -TimeoutSec 5
+                            if (\$r.StatusCode -eq 200) {
+                                Write-Host "Container healthy! Received HTTP 200 from \$url."
+                                exit 0
+                            }
+                        } catch {
+                            Write-Host "Attempt \$i of 15: Waiting for container service..."
+                        }
+                        Start-Sleep -Seconds 4
+                    }
+                    throw "Health check failed: \$url did not respond with 200 OK."
+                """
             }
         }
 
@@ -69,13 +126,11 @@ pipeline {
                     $webapps = Join-Path $env:TOMCAT_HOME 'webapps'
 
                     Write-Host "Deploying to $webapps"
-
                     Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
                     (Get-Service -Name $service).WaitForStatus('Stopped', '00:00:30')
 
                     Remove-Item -Path (Join-Path $webapps 'rrp.war') -Force -ErrorAction SilentlyContinue
                     Remove-Item -Path (Join-Path $webapps 'rrp') -Recurse -Force -ErrorAction SilentlyContinue
-
                     Copy-Item -Path 'target\\rrp.war' -Destination (Join-Path $webapps 'rrp.war') -Force
 
                     Start-Service -Name $service
@@ -84,7 +139,7 @@ pipeline {
             }
         }
 
-        stage('Health Check') {
+        stage('Tomcat Health Check') {
             when {
                 expression { params.DEPLOY_ENV == 'tomcat-local' }
             }
