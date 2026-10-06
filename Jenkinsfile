@@ -12,7 +12,7 @@ pipeline {
     }
 
     environment {
-        PATH = "C:\\Program Files\\Docker\\Docker\\resources\\bin;${env.PATH}"
+        PATH = "C:\\Users\\saksh\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;${env.PATH}"
         DOCKER_HOST = 'tcp://localhost:2375'
     }
 
@@ -71,7 +71,7 @@ pipeline {
             }
             steps {
                 powershell """
-                    \$env:Path = "C:\\Program Files\\Docker\\Docker\\resources\\bin;" + \$env:Path
+                    \$env:Path = "C:\\Users\\saksh\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;" + \$env:Path
                     \$env:DOCKER_HOST = "tcp://localhost:2375"
 
                     Write-Host "Building versioned image: return-refund-portal:${BUILD_NUMBER}"
@@ -88,7 +88,7 @@ pipeline {
             }
             steps {
                 powershell """
-                    \$env:Path = "C:\\Program Files\\Docker\\Docker\\resources\\bin;" + \$env:Path
+                    \$env:Path = "C:\\Users\\saksh\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;" + \$env:Path
                     \$env:DOCKER_HOST = "tcp://localhost:2375"
 
                     Write-Host "Stopping and removing existing rrp-container if present..."
