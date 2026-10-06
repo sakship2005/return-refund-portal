@@ -1,0 +1,45 @@
+@"
+---
+- name: Disaster Recovery and Rollback to Previous Stable Release
+  hosts: portal_servers
+  become: yes
+  vars:
+    stable_image: "return-refund-portal:1.0.0"
+    container_name: "rrp-container"
+    host_port: 8082
+    container_port: 8081
+    health_endpoint: "http://localhost:8082/requests"
+
+  tasks:
+    - name: Notice of Rollback Event
+      debug:
+        msg: "Initiating rollback sequence to previous stable release: {{ stable_image }}"
+
+    - name: Stop and remove current faulty container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: absent
+
+    - name: Launch container from previous stable image
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ stable_image }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "{{ host_port }}:{{ container_port }}"
+
+    - name: Validate Health Check after Rollback Recovery
+      uri:
+        url: "{{ health_endpoint }}"
+        method: GET
+        status_code: 200
+      register: rollback_check
+      until: rollback_check.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Rollback Success Confirmation
+      debug:
+        msg: "Rollback SUCCESSFUL! Stable version restored and responding with HTTP 200."
+"@ | Set-Content -Path ansible/rollback.yml -Encoding UTF8

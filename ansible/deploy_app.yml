@@ -1,0 +1,44 @@
+@"
+---
+- name: Automated Application Deployment and Health Check
+  hosts: portal_servers
+  become: yes
+  vars:
+    app_image: "return-refund-portal:latest"
+    container_name: "rrp-container"
+    host_port: 8082
+    container_port: 8081
+    health_endpoint: "http://localhost:8082/requests"
+
+  tasks:
+    - name: Ensure target deployment directory exists
+      file:
+        path: /opt/rrp
+        state: directory
+        mode: '0755'
+
+    - name: Deploy Portal Docker Container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ app_image }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "{{ host_port }}:{{ container_port }}"
+        recreate: auto
+
+    - name: Validate Application Health Check
+      uri:
+        url: "{{ health_endpoint }}"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: health_check
+      until: health_check.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Display Health Check Result
+      debug:
+        msg: "Application is HEALTHY! Endpoint returned status {{ health_check.status }}"
+"@ | Set-Content -Path ansible/deploy_app.yml -Encoding UTF8
