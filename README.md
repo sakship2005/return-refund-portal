@@ -24,3 +24,18 @@ See docs/mvp-scope.md for the full 15-task scope.
 - main        : stable, release-ready
 - develop     : integration branch
 - feature/<name> : one branch per feature, merged into develop via PR
+
+# Base image with Java 21 runtime
+FROM eclipse-temurin:21-jre-alpine
+
+# Set working directory inside container
+WORKDIR /app
+
+# Copy the packaged Spring Boot WAR file into container
+COPY target/rrp.war app.war
+
+# Expose internal application port
+EXPOSE 8080
+
+# Run the executable WAR file
+ENTRYPOINT ["java", "-jar", "app.war"]

@@ -11,6 +11,11 @@ pipeline {
         maven 'Maven-3.9.16'
     }
 
+    environment {
+        PATH = "C:\\Program Files\\Docker\\Docker\\resources\\bin;${env.PATH}"
+        DOCKER_HOST = 'tcp://localhost:2375'
+    }
+
     parameters {
         choice(
             name: 'DEPLOY_ENV',
@@ -66,6 +71,9 @@ pipeline {
             }
             steps {
                 powershell """
+                    \$env:Path = "C:\\Program Files\\Docker\\Docker\\resources\\bin;" + \$env:Path
+                    \$env:DOCKER_HOST = "tcp://localhost:2375"
+
                     Write-Host "Building versioned image: return-refund-portal:${BUILD_NUMBER}"
                     docker build -t return-refund-portal:${BUILD_NUMBER} .
                     docker tag return-refund-portal:${BUILD_NUMBER} return-refund-portal:latest
@@ -80,9 +88,12 @@ pipeline {
             }
             steps {
                 powershell """
+                    \$env:Path = "C:\\Program Files\\Docker\\Docker\\resources\\bin;" + \$env:Path
+                    \$env:DOCKER_HOST = "tcp://localhost:2375"
+
                     Write-Host "Stopping and removing existing rrp-container if present..."
-                    docker stop rrp-container 2>\$null
-                    docker rm rrp-container 2>\$null
+                    try { docker stop rrp-container } catch {}
+                    try { docker rm rrp-container } catch {}
 
                     Write-Host "Deploying new container rrp-container from image return-refund-portal:${BUILD_NUMBER} on port ${params.DOCKER_CONTAINER_PORT}:8081..."
                     docker run -d -p ${params.DOCKER_CONTAINER_PORT}:8081 --name rrp-container return-refund-portal:${BUILD_NUMBER}
