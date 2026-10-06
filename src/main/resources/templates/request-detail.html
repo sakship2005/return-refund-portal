@@ -9,26 +9,28 @@
   <p><b>Amount:</b> <span th:text="${request.amount}"></span></p>
   <p><b>Customer:</b> <span th:text="${request.customerName}"></span></p>
   <p><b>Status:</b> <span th:text="${request.status}"></span></p>
-  <a th:href="@{/requests/{id}/edit(id=${request.id})}">Edit request</a>
-  <h2>Status workflow</h2>
-  <form th:if="${request.status.name() != 'REJECTED' and request.status.name() != 'CLOSED'}"
-        th:action="@{/requests/{id}/advance(id=${request.id})}" method="post">
-    <label>Changed by: <input type="text" name="actor" required></label>
+
+  <a th:href="@{/requests/{id}/edit(id=${request.id})}">Edit request</a> |
+  <a href="/requests">Back to list</a>
+
+  <hr>
+  <h3>Change Status</h3>
+  <form th:action="@{/requests/{id}/advance(id=${request.id})}" method="post" style="display:inline"
+        th:if="${request.status.name() != 'CLOSED' and request.status.name() != 'REJECTED'}">
+    <input type="text" name="actor" placeholder="Your name" required>
     <button type="submit">Advance status</button>
   </form>
-  <form th:if="${request.status.name() == 'UNDER_REVIEW'}"
-        th:action="@{/requests/{id}/reject(id=${request.id})}" method="post">
-    <input type="hidden" name="actor" value="agent">
+  <form th:action="@{/requests/{id}/reject(id=${request.id})}" method="post" style="display:inline"
+        th:if="${request.status.name() == 'UNDER_REVIEW'}">
+    <input type="text" name="actor" placeholder="Your name" required>
     <button type="submit">Reject request</button>
   </form>
-  <h2>Status history</h2>
+
+  <hr>
+  <h3>Status History</h3>
   <ul>
-    <li th:each="entry : ${history}">
-      <span th:text="${entry.oldStatus}"></span> -&gt;
-      <span th:text="${entry.newStatus}"></span>
-      by <span th:text="${entry.changedBy}"></span>
-    </li>
+    <li th:each="h : ${history}"
+        th:text="${h.oldStatus} + ' -> ' + ${h.newStatus} + ' by ' + ${h.changedBy}"></li>
   </ul>
-  <a href="/requests">Back to list</a>
 </body>
 </html>
