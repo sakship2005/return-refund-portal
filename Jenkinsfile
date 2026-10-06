@@ -43,7 +43,10 @@ pipeline {
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                    // publish the test report; fail if no report exists (means tests never ran)
+                    junit allowEmptyResults: false, testResults: 'target/surefire-reports/*.xml'
+                    // keep Selenium failure screenshots with the build
+                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
                 }
             }
         }
