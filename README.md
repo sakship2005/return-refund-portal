@@ -17,6 +17,17 @@ Requested -> Under Review -> Approved / Rejected -> Item Received -> Refund Proc
 App: http://localhost:8081
 Health check: http://localhost:8081/health
 
+## Login and Roles
+All pages except `/login` and `/health` need a login.
+
+| Account | Password | Role | Can do |
+|---|---|---|---|
+| `user` | `user123` | USER (customer) | Create requests, see and edit only their own requests (until review starts) |
+| `user2` | `user123` | USER (customer) | Same as above, with separate data |
+| `admin` | `admin123` | ADMIN (staff) | See all requests, move them through the status workflow (review, approve/reject, item received, refund, close), dashboard, H2 console |
+
+Passwords are demo defaults. Change them with `rrp.security.user-password` / `rrp.security.admin-password` in `application.properties`, or the environment variables `RRP_SECURITY_USER_PASSWORD` / `RRP_SECURITY_ADMIN_PASSWORD`.
+
 ## MVP Scope
 See docs/mvp-scope.md for the full 15-task scope.
 

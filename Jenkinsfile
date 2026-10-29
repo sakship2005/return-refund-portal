@@ -107,7 +107,7 @@ pipeline {
             }
             steps {
                 powershell """
-                    \$url = "http://localhost:${params.DOCKER_CONTAINER_PORT}/requests"
+                    \$url = "http://localhost:${params.DOCKER_CONTAINER_PORT}/health"
                     Write-Host "Waiting for container to be healthy at \$url..."
                     for (\$i = 1; \$i -le 15; \$i++) {
                         try {

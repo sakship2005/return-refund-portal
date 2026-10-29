@@ -40,6 +40,17 @@ public class ReturnRequestService {
         return repository.findByOrderIdContainingIgnoreCaseOrCustomerNameContainingIgnoreCase(query, query);
     }
 
+    // Admin sees every request; a normal user only sees the ones they created.
+    public List<ReturnRequest> searchFor(String query, String username, boolean admin) {
+        List<ReturnRequest> results = search(query);
+        if (admin) {
+            return results;
+        }
+        return results.stream()
+                .filter(r -> username.equals(r.getCreatedBy()))
+                .toList();
+    }
+
     // Allowed transitions: current status -> next status
     private static final Map<Status, Status> NEXT = Map.of(
         Status.REQUESTED, Status.UNDER_REVIEW,

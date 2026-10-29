@@ -1,6 +1,5 @@
-@"
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,24 +8,15 @@
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4">
-    <div class="container">
-      <a class="navbar-brand" href="/">🔄 Return & Refund Portal</a>
-      <div class="navbar-nav ms-auto">
-        <a class="nav-link" href="/requests">Requests</a>
-        <a class="nav-link" href="/requests/new">+ New Request</a>
-        <a class="nav-link active" href="/dashboard">Dashboard</a>
-      </div>
-    </div>
-  </nav>
+  <div th:replace="~{fragments/navbar :: navbar('dashboard')}"></div>
 
   <div class="container py-2" style="max-width: 800px;">
     <div class="card card-custom p-4 mb-4 shadow-sm">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 fw-bold m-0">Return Request Dashboard</h1>
-        <a href="/requests" class="btn btn-outline-primary btn-sm">View requests</a>
+        <a th:href="@{/requests}" class="btn btn-outline-primary btn-sm">View requests</a>
       </div>
-      
+
       <div class="alert alert-info py-2 mb-4">
         <p class="m-0">Total refund value processed: <strong class="fs-5 text-primary" th:text="${totalRefund}"></strong></p>
       </div>
@@ -48,4 +38,3 @@
   </div>
 </body>
 </html>
-"@ | Set-Content -Path src\main\resources\templates\dashboard.html -Encoding UTF8

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+  <nav th:fragment="navbar(active)" class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4">
+    <div class="container">
+      <a class="navbar-brand" th:href="@{/}">🔄 Return &amp; Refund Portal</a>
+      <div class="navbar-nav ms-auto flex-row align-items-center gap-1">
+        <a class="nav-link" th:classappend="${active == 'requests'} ? 'active'" th:href="@{/requests}">Requests</a>
+        <a class="nav-link" th:classappend="${active == 'new'} ? 'active'" th:href="@{/requests/new}">+ New Request</a>
+        <a class="nav-link" th:classappend="${active == 'dashboard'} ? 'active'" th:href="@{/dashboard}" sec:authorize="hasRole('ADMIN')">Dashboard</a>
+        <span class="navbar-text text-white-50 ms-3 me-2 small">
+          <span sec:authentication="name">user</span>
+          <span class="badge bg-light text-dark ms-1" sec:authorize="hasRole('ADMIN')">Admin</span>
+          <span class="badge bg-light text-dark ms-1" sec:authorize="hasRole('USER')">Customer</span>
+        </span>
+        <form th:action="@{/logout}" method="post" class="d-inline m-0">
+          <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+        </form>
+      </div>
+    </div>
+  </nav>
+</body>
+</html>

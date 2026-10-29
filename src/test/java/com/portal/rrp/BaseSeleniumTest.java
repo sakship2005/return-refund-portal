@@ -68,6 +68,27 @@ public abstract class BaseSeleniumTest {
         return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
+    // demo accounts (must match application.properties defaults)
+    protected static final String USER = "user";
+    protected static final String USER2 = "user2";
+    protected static final String USER_PASSWORD = "user123";
+    protected static final String ADMIN = "admin";
+    protected static final String ADMIN_PASSWORD = "admin123";
+
+    protected void login(String username, String password) {
+        driver.get(url("/login"));
+        driver.findElement(By.name("username")).sendKeys(username);
+        driver.findElement(By.name("password")).sendKeys(password);
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+    }
+
+    protected void logout() {
+        driver.get(url("/requests"));
+        driver.findElement(By.cssSelector("form[action$='/logout'] button")).click();
+        wait.until(ExpectedConditions.urlContains("/login"));
+    }
+
     protected void createRequest(String orderId, String product, String reason,
                                  String amount, String customer) {
         driver.get(url("/requests/new"));
@@ -96,9 +117,9 @@ public abstract class BaseSeleniumTest {
                 By.xpath("//p[b[normalize-space()='Status:']]/span"), expected));
     }
 
-    protected void advance(String actor) {
-        driver.findElement(By.name("actor")).sendKeys(actor);
-        driver.findElement(By.xpath("//button[normalize-space()='Advance status']")).click();
+    // clicks the (admin-only) "next step" button, whatever its label is for the current status
+    protected void advance() {
+        driver.findElement(By.cssSelector("form[action$='/advance'] button[type='submit']")).click();
     }
 
     private void takeScreenshot(String name) {

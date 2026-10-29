@@ -1,6 +1,5 @@
-@"
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,24 +8,17 @@
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4">
-    <div class="container">
-      <a class="navbar-brand" href="/">🔄 Return & Refund Portal</a>
-      <div class="navbar-nav ms-auto">
-        <a class="nav-link" href="/requests">Requests</a>
-        <a class="nav-link" href="/requests/new">+ New Request</a>
-        <a class="nav-link" href="/dashboard">Dashboard</a>
-      </div>
-    </div>
-  </nav>
+  <div th:replace="~{fragments/navbar :: navbar('requests')}"></div>
 
   <div class="container py-2" style="max-width: 800px;">
     <div class="card card-custom p-4 mb-4 shadow-sm">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 fw-bold m-0">Request Detail</h1>
         <div>
-          <a class="btn btn-sm btn-outline-primary" th:href="@{/requests/{id}/edit(id=${request.id})}">Edit request</a>
-          <a class="btn btn-sm btn-outline-secondary" href="/requests">Back to list</a>
+          <a class="btn btn-sm btn-outline-primary"
+             th:if="${admin or request.status.name() == 'REQUESTED'}"
+             th:href="@{/requests/{id}/edit(id=${request.id})}">Edit request</a>
+          <a class="btn btn-sm btn-outline-secondary" th:href="@{/requests}">Back to list</a>
         </div>
       </div>
       <div class="row g-3 py-2">
@@ -39,18 +31,89 @@
       </div>
 
       <hr class="my-4">
-      <h3 class="h5 fw-bold mb-3">Change Status</h3>
-      <div class="d-flex flex-wrap gap-3">
-        <form th:action="@{/requests/{id}/advance(id=${request.id})}" method="post" class="d-inline-flex gap-2"
-              th:if="${request.status.name() != 'CLOSED' and request.status.name() != 'REJECTED'}">
-          <input type="text" name="actor" class="form-control form-control-sm" placeholder="Your name" required style="width: 160px;">
-          <button type="submit" class="btn btn-success btn-sm">Advance status</button>
-        </form>
-        <form th:action="@{/requests/{id}/reject(id=${request.id})}" method="post" class="d-inline-flex gap-2"
-              th:if="${request.status.name() == 'UNDER_REVIEW'}">
-          <input type="text" name="actor" class="form-control form-control-sm" placeholder="Your name" required style="width: 160px;">
-          <button type="submit" class="btn btn-danger btn-sm">Reject request</button>
-        </form>
+      <h3 class="h5 fw-bold mb-3">Verification Proofs (Product & Bill)</h3>
+      <div class="row g-3 mb-3">
+        <!-- Product Image -->
+        <div class="col-md-6">
+          <div class="card h-100 border">
+            <div class="card-header bg-light py-2 fw-semibold d-flex justify-content-between align-items-center">
+              <span>Product Image</span>
+              <span th:if="${request.hasProductImage()}" class="badge bg-success text-white">Uploaded</span>
+              <span th:unless="${request.hasProductImage()}" class="badge bg-secondary text-white">Not Provided</span>
+            </div>
+            <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-3">
+              <div th:if="${request.hasProductImage()}" class="w-100">
+                <a th:href="@{/requests/{id}/product-image(id=${request.id})}" target="_blank" title="Click to view full image">
+                  <img th:src="@{/requests/{id}/product-image(id=${request.id})}" alt="Product image proof"
+                       class="img-fluid rounded border shadow-sm mb-2" style="max-height: 200px; object-fit: contain;">
+                </a>
+                <div>
+                  <a th:href="@{/requests/{id}/product-image(id=${request.id})}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    View Full Image
+                  </a>
+                </div>
+              </div>
+              <div th:unless="${request.hasProductImage()}" class="text-muted py-4">
+                <p class="m-0 small">No product image uploaded.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bill / Receipt -->
+        <div class="col-md-6">
+          <div class="card h-100 border">
+            <div class="card-header bg-light py-2 fw-semibold d-flex justify-content-between align-items-center">
+              <span>Bill / Invoice Receipt</span>
+              <span th:if="${request.hasBillImage()}" class="badge bg-success text-white">Uploaded</span>
+              <span th:unless="${request.hasBillImage()}" class="badge bg-secondary text-white">Not Provided</span>
+            </div>
+            <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-3">
+              <div th:if="${request.hasBillImage()}" class="w-100">
+                <a th:if="${request.billImageContentType != null and request.billImageContentType.startsWith('image/')}"
+                   th:href="@{/requests/{id}/bill-image(id=${request.id})}" target="_blank" title="Click to view full image">
+                  <img th:src="@{/requests/{id}/bill-image(id=${request.id})}" alt="Bill receipt proof"
+                       class="img-fluid rounded border shadow-sm mb-2" style="max-height: 200px; object-fit: contain;">
+                </a>
+                <div th:unless="${request.billImageContentType != null and request.billImageContentType.startsWith('image/')}" class="py-2">
+                  <p class="fw-semibold text-secondary mb-2 small" th:text="${request.billImageFileName != null ? request.billImageFileName : 'Bill Document'}"></p>
+                </div>
+                <div>
+                  <a th:href="@{/requests/{id}/bill-image(id=${request.id})}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    View / Download Bill
+                  </a>
+                </div>
+              </div>
+              <div th:unless="${request.hasBillImage()}" class="text-muted py-4">
+                <p class="m-0 small">No bill or receipt uploaded.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Admin: workflow controls -->
+      <div th:if="${admin}">
+        <h3 class="h5 fw-bold mb-3">Owner / Admin Decision</h3>
+        <p class="text-muted small mb-3">Review the product condition and invoice proof above before advancing status or approving the refund.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <form th:if="${request.status.actionLabel != null}"
+                th:action="@{/requests/{id}/advance(id=${request.id})}" method="post">
+            <button type="submit" class="btn btn-success btn-sm" th:text="${request.status.actionLabel}">Next step</button>
+          </form>
+          <form th:if="${request.status.name() == 'UNDER_REVIEW'}"
+                th:action="@{/requests/{id}/reject(id=${request.id})}" method="post">
+            <button type="submit" class="btn btn-danger btn-sm">Reject request</button>
+          </form>
+          <p class="text-muted m-0" th:if="${request.status.actionLabel == null}">This request is finished. No further actions.</p>
+        </div>
+      </div>
+
+      <!-- Customer: read-only message -->
+      <div class="alert alert-light border m-0" th:unless="${admin}">
+        Status updates and refund decisions are handled by our support and finance team. You can edit your request until review starts.
       </div>
 
       <hr class="my-4">
@@ -63,4 +126,3 @@
   </div>
 </body>
 </html>
-"@ | Set-Content -Path src\main\resources\templates\request-detail.html -Encoding UTF8
